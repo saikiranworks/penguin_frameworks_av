@@ -217,43 +217,12 @@ bool roundBufferDimensionNearest(int32_t width, int32_t height,
         }
     }
 
-// QTI_BEGIN: 2021-06-24: Camera: Master callback mode support for MCX raw
-    if (isPriviledgedClient == true && bestWidth == -1 &&
-        (format == HAL_PIXEL_FORMAT_RAW10 || format == HAL_PIXEL_FORMAT_RAW12 ||
-         format == HAL_PIXEL_FORMAT_RAW16 || format == HAL_PIXEL_FORMAT_RAW_OPAQUE)) {
-        bool isLogicalCamera = false;
-        auto entry = info.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES);
-        for (size_t i = 0; i < entry.count; ++i) {
-            uint8_t capability = entry.data.u8[i];
-            if (capability == ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA ||
-                    capability == ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW) {
-                isLogicalCamera = true;
-                break;
-            }
-        }
-
-        if (isLogicalCamera == true) {
-            bestWidth = width;
-            bestHeight = height;
-        }
-    }
-
-// QTI_END: 2021-06-24: Camera: Master callback mode support for MCX raw
-// QTI_BEGIN: 2021-11-15: Camera: Avoid roundBufferDimensionsNearest for AIDE2 YUV streams
-    // Avoid roundBufferDimensionsNearest for privileged client YUV streams to meet the AIDE2
-    // requirement. AIDE2 is vendor enhanced feature which requires special resolutions and
-    // those are not populated in static capabilities.
-    if (isPriviledgedClient == true &&
-            (format == HAL_PIXEL_FORMAT_YCbCr_420_888 || format == HAL_PIXEL_FORMAT_BLOB ||
-             format == HAL_PIXEL_FORMAT_Y8 || format == HAL_PIXEL_FORMAT_Y16)) {
-        ALOGI("Bypass roundBufferDimensionNearest for privilegedClient YUV streams "
+    if (isPriviledgedClient == true && bestWidth == -1) {
+        ALOGI("Bypass roundBufferDimensionNearest for privilegedClient "
                 "width %d height %d for format %d", width, height, format);
-
         bestWidth  = width;
         bestHeight = height;
     }
-
-// QTI_END: 2021-11-15: Camera: Avoid roundBufferDimensionsNearest for AIDE2 YUV streams
     if (bestWidth == -1) {
         // Return false if no configurations for this format were listed
         ALOGE("%s: No configurations for format %d width %d, height %d, maxResolution ? %s",
