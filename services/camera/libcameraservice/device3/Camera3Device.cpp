@@ -2811,11 +2811,21 @@ status_t Camera3Device::configureStreamsLocked(int operatingMode,
 
     int64_t logId = mCameraServiceProxyWrapper->getCurrentLogIdForCamera(mId);
     CameraMetadata modifiedSessionParams = sessionParams;
-    uint32_t clientNameHexId = 0x81420000;
-//    const char* clientNameStr = "com.android.camera";
     std::string pkgName = CameraService::getCurrPackageName();
-    modifiedSessionParams.update(clientNameHexId,
-                                 String8(pkgName.c_str()));
+    if (!pkgName.empty()) {
+        uint32_t clientNameHexId = 0x81420000;
+        modifiedSessionParams.update(clientNameHexId,
+                                     String8(pkgName.c_str()));
+
+        // OnePlus / OPlus vendor tags for package and activity name
+        uint32_t oplusPkgTag = 0x80ec0000;
+        uint32_t oplusActTag = 0x80ec0001;
+        modifiedSessionParams.update(oplusPkgTag,
+                                     String8(pkgName.c_str()));
+        std::string actName = (pkgName == "com.oplus.camera") ? "com.oplus.camera.Camera" : pkgName;
+        modifiedSessionParams.update(oplusActTag,
+                                     String8(actName.c_str()));
+    }
     const camera_metadata_t *sessionBuffer = modifiedSessionParams.getAndLock();
     res = mInterface->configureStreams(sessionBuffer, &config, bufferSizes, logId);
     modifiedSessionParams.unlock(sessionBuffer);
